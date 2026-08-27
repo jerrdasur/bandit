@@ -252,7 +252,7 @@ def create_result(issue, rules, rule_indices):
 
     add_region_and_context_region(
         physical_location,
-        issue_dict["line_range"],
+        issue_dict["line_number"],
         issue_dict["col_offset"],
         issue_dict["end_col_offset"],
         issue_dict["code"],
@@ -283,18 +283,18 @@ def level_from_severity(severity):
 
 
 def add_region_and_context_region(
-    physical_location, line_range, col_offset, end_col_offset, code
+    physical_location, line_number, col_offset, end_col_offset, code
 ):
     if code:
         first_line_number, snippet_lines = parse_code(code)
-        snippet_line = snippet_lines[1 if len(snippet_lines) > 1 else 0]
+        snippet_line = snippet_lines[line_number - first_line_number]
         snippet = om.ArtifactContent(text=snippet_line)
     else:
         snippet = None
 
     physical_location.region = om.Region(
-        start_line=line_range[0],
-        end_line=line_range[1] if len(line_range) > 1 else line_range[0],
+        start_line=line_number,
+        end_line=line_number,
         start_column=col_offset + 1,
         end_column=end_col_offset + 1,
         snippet=snippet,

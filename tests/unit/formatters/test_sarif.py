@@ -137,3 +137,34 @@ class SarifFormatterTests(testtools.TestCase):
                 self.tmp_fname,
                 physicalLocation["artifactLocation"]["uri"],
             )
+
+    def test_result_uses_issue_line_not_parent_range(self):
+        test_issue = mock.Mock()
+        test_issue.as_dict.return_value = {
+            "filename": "tests/conftest.py",
+            "test_name": "hardcoded_tmp_directory",
+            "test_id": "B108",
+            "issue_severity": "MEDIUM",
+            "issue_cwe": {"id": 377},
+            "issue_confidence": "MEDIUM",
+            "issue_text": "Probable insecure usage of temp file/directory.",
+            "line_number": 170,
+            "line_range": list(range(164, 175)),
+            "col_offset": 34,
+            "end_col_offset": 56,
+            "code": (
+                '169                 "autorestart": True,\n'
+                '170                 "stdout_logfile": "/tmp/test.log",\n'
+                '171                 "stderr_logfile": "/tmp/test.log",\n'
+            ),
+        }
+
+        result = sarif.create_result(test_issue, {}, {})
+        region = result.locations[0].physical_location.region
+
+        self.assertEqual(170, region.start_line)
+        self.assertEqual(170, region.end_line)
+        self.assertEqual(
+            '                "stdout_logfile": "/tmp/test.log",\n',
+            region.snippet.text,
+        )
